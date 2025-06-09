@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "uipath-mcp-server"
+version = "0.1.0"
+description = "MCP server for UiPath API integration"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    { name = "asklokesh", email = "asklokesh@example.com" }
+]
+dependencies = [
+    "httpx>=0.24.0",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "python-dotenv>=1.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1.0"
+]
+
+[project.scripts]
+uipath-mcp = "uipath_mcp.server:main"
