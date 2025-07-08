@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/lokimcpuniverse-uipath-mcp-server-badge.png)](https://mseep.ai/app/lokimcpuniverse-uipath-mcp-server)
+
 # UiPath MCP Server
 
 <div align="center">
