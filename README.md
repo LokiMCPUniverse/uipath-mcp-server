@@ -16,54 +16,103 @@
 [![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![MCP](https://img.shields.io/badge/Model_Context_Protocol-DC143C?style=for-the-badge)](https://modelcontextprotocol.io)
 
-[![Commit Activity](https://img.shields.io/github/commit-activity/m/LokiMCPUniverse/uipath-mcp-server?style=flat-square)](https://github.com/LokiMCPUniverse/uipath-mcp-server/pulse)
-[![Code Size](https://img.shields.io/github/languages/code-size/LokiMCPUniverse/uipath-mcp-server?style=flat-square)](https://github.com/LokiMCPUniverse/uipath-mcp-server)
-[![Contributors](https://img.shields.io/github/contributors/LokiMCPUniverse/uipath-mcp-server?style=flat-square)](https://github.com/LokiMCPUniverse/uipath-mcp-server/graphs/contributors)
-
 </div>
 
-A Model Context Protocol (MCP) server for integrating UiPath with GenAI applications.
-
-## Overview
-
-Robotic Process Automation (RPA) platform
+A Model Context Protocol (MCP) server that exposes the UiPath Orchestrator
+Cloud API to MCP-compatible clients such as Claude Desktop. Built on the
+official `mcp` Python SDK (FastMCP) with async `httpx` and OAuth2 client
+credentials authentication.
 
 ## Features
 
-- Comprehensive UiPath API coverage
-- Multiple authentication methods
-- Enterprise-ready with rate limiting
-- Full error handling and retry logic
-- Async support for better performance
+- OAuth2 client credentials flow against UiPath Cloud Identity Server with
+  automatic token caching and refresh.
+- Personal access token (PAT) support via the `UIPATH_ACCESS_TOKEN` env var.
+- Optional Orchestrator folder scoping through `X-UIPATH-OrganizationUnitId`.
+- Typed tool surface covering processes, robots, machines, jobs, queues, and
+  assets.
+- Single-retry on 401 with forced token refresh.
 
 ## Installation
 
-```bash
-pip install uipath-mcp-server
-```
-
-Or install from source:
+Install from source:
 
 ```bash
-git clone https://github.com/asklokesh/uipath-mcp-server.git
+git clone https://github.com/LokiMCPUniverse/uipath-mcp-server.git
 cd uipath-mcp-server
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e .
 ```
 
 ## Configuration
 
-Create a `.env` file or set environment variables according to UiPath API requirements.
+All configuration is read from environment variables (prefixed with `UIPATH_`)
+or an optional `.env` file in the working directory.
 
-## Quick Start
+| Variable | Required | Description |
+| --- | --- | --- |
+| `UIPATH_ORCHESTRATOR_URL` | no | Base URL, defaults to `https://cloud.uipath.com`. |
+| `UIPATH_ORGANIZATION_NAME` | yes | Organization (account) logical name. |
+| `UIPATH_TENANT_NAME` | yes | Tenant logical name. |
+| `UIPATH_CLIENT_ID` | yes* | OAuth2 client id of the external application. |
+| `UIPATH_CLIENT_SECRET` | yes* | OAuth2 client secret. |
+| `UIPATH_ACCESS_TOKEN` | no | Pre-issued access token or PAT (overrides client credentials). |
+| `UIPATH_FOLDER_ID` | no | Folder id sent via `X-UIPATH-OrganizationUnitId`. |
+| `UIPATH_TIMEOUT` | no | HTTP timeout in seconds (default 30). |
 
-```python
-from uipath_mcp import UipathMCPServer
+`*` Not required if `UIPATH_ACCESS_TOKEN` is provided.
 
-# Initialize the server
-server = UipathMCPServer()
+## Running
 
-# Start the server
-server.start()
+```bash
+uipath-mcp
+```
+
+### Claude Desktop configuration
+
+Add the following to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "uipath": {
+      "command": "uipath-mcp",
+      "env": {
+        "UIPATH_ORGANIZATION_NAME": "your-org",
+        "UIPATH_TENANT_NAME": "your-tenant",
+        "UIPATH_CLIENT_ID": "...",
+        "UIPATH_CLIENT_SECRET": "...",
+        "UIPATH_FOLDER_ID": "123456"
+      }
+    }
+  }
+}
+```
+
+## Tools
+
+| Tool | Description |
+| --- | --- |
+| `list_processes` | List Orchestrator processes (Releases). |
+| `list_robots` | List robots registered in the tenant. |
+| `list_machines` | List machines registered in the tenant. |
+| `start_job` | Start a process, optionally with specific robots and input arguments. |
+| `list_jobs` | List jobs, optionally filtered by state. |
+| `get_job` | Get a single job by id. |
+| `stop_job` | Stop or kill a running job (`SoftStop` or `Kill`). |
+| `list_queue_items` | List queue items, optionally filtered by queue name and status. |
+| `add_queue_item` | Add a new item to a queue with arbitrary specific content. |
+| `list_assets` | List assets in the current folder. |
+
+## Development
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+pytest -x --tb=short
+ruff check src tests
 ```
 
 ## License
